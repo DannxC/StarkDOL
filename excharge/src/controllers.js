@@ -12,6 +12,8 @@ const projectExchangeID = process.env.STARK_PROJECT_ID;
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const usdToBrlAPI = process.env.COIN_API;
 const exchangeAddress = process.env.EXCHANGE_ADDRESS;
+const taxId = process.env.TAX_ID;
+
 
 
 
@@ -92,12 +94,14 @@ export const sendPaymentController = async (req, res) => {
         
         const starkDolBalance = await starkDolContract.balanceOf(exchangeAddress);
 
+        const usdPrice = await axios.get(usdToBrlAPI);
+
         // Format the balance from wei to USDC (assuming USDC has 6 decimal places)
         const starkDolFormatted = ethers.formatUnits(starkDolBalance, 18);
 
         return res.status(200).json({
-            'starkbankBalance': starkbankBalance,
-            'usdcBalance': starkDolFormatted,
+            'starkbankBalance': starkbankBalance/usdPrice.data.USDBRL.ask,
+            'starkDolBalance': starkDolFormatted
         });
     } catch (error) {
       console.error(error);

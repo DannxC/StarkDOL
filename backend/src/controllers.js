@@ -5,8 +5,7 @@ import * as starkbank from 'starkbank'
 
 dotenv.config();
 
-const senderPrivateKey = process.env.SENDER_PRIVATE_KEY;
-const exchangeAddress = '0x8D2b47E6eD926fef8104BaC992ec6567ABE08716';
+const exchangeAddress = process.env.EXCHANGE_ADDRESS;
 const providerUrl = process.env.INFURA_URL;
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const userPrivateKeyContent = process.env.STARK_USER_PRIVATE_KEY;
@@ -28,7 +27,7 @@ starkbank.setUser(user);
 const provider = new ethers.JsonRpcProvider(providerUrl);
 
 // Create a walconst instance
-const wallet = new ethers.Wallet(senderPrivateKey, provider);
+const wallet = new ethers.Wallet("", provider);
 
 export const sendPaymentController = async (req, res) => {
     const { 
