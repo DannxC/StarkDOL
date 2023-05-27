@@ -19,6 +19,11 @@ app.get('/', (req, res) => {
     res.send('Hello, world!');
 });
 
+app.get(
+    '/balance',
+    controllers.getBalanceController
+);
+
 app.post(
     '/payment', 
     controllers.sendPaymentController

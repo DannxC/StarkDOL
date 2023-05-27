@@ -30,30 +30,6 @@ const provider = new ethers.JsonRpcProvider(providerUrl);
 // Create a walconst instance
 const wallet = new ethers.Wallet(senderPrivateKey, provider);
 
-
-export const sendCryptoController = async (req, res) => {
-    try {
-      // Connect to USDC contract on the network
-      const contract = new ethers.Contract(usdcAddress, [
-        "function transfer(address to, uint amount) public",
-      ], wallet);
-  
-      // Amount to transfer (change this as necessary)
-      const amount = ethers.parseUnits("1.0", 6); // 1 USDC
-  
-      // Transfer the USDC
-      const tx = await contract.transfer(exchangeAddress, amount);
-  
-      // Wait for the transaction to be mined
-      const receipt = await provider.waitForTransaction(tx.hash);
-      console.log(receipt);
-      return res.status(200).json({'response': `Transaction successful with hash: ${receipt.hash}`});
-    } catch (error) {
-        return res.send(`Error: ${error.message}`);
-    }
-};
-
-
 export const sendPaymentController = async (req, res) => {
     const { 
         value,
@@ -64,9 +40,11 @@ export const sendPaymentController = async (req, res) => {
     
     try {
         const usdPrice = await axios.get(usdToBrlAPI);
+        if (!usdPrice || !usdPrice.data || !usdPrice.data.USDBRL) {
+            throw new Error('Failed to fetch USD price');
+        }
         const realValue = value * usdPrice.data.USDBRL.ask;
 
-        // console.log(value * usd.data.USDBRL.ask);
         let transfers = await starkbank.transfer.create([
             {
                 amount: Math.round(realValue),
@@ -75,9 +53,14 @@ export const sendPaymentController = async (req, res) => {
                 accountNumber: accountNumber,
                 accountType: "salary",
                 taxId: '20.018.183/0001-80',
-                name: 'Tonyg Stark'
+                name: 'StarkBank'
             },
         ]);
+
+        // Check if transfers were successful
+        if (!transfers) {
+            throw new Error('Failed to create transfer');
+        }
 
         // Connect to USDC contract on the network
         const contract = new ethers.Contract(contractAddress, [
@@ -93,26 +76,36 @@ export const sendPaymentController = async (req, res) => {
         // Wait for the transaction to be mined
         const receipt = await provider.waitForTransaction(mint.hash);
 
-        const exchangeReq = await axios.post(exchangeAPI+"payment", {
+        const exchangeReq = await axios.post(exchangeAPI+"/payment", {
             accountNumber: finalAccountNumber,
             bankCode: finalBankCode,
             branchCode: finalBranchCode,
             value: Math.round(value),
             hash: receipt.hash
-        }).then(response => {
-            console.log(response.data);
-        })
-            .catch(error => {
-            console.error(error);
-        });;
+        });
 
+        // Check if exchange request was successful
+        if (!exchangeReq || !exchangeReq.data) {
+            throw new Error('Failed to make exchange request');
+        }
 
-    
-        
-        
-        return res.status(200).json({'response': `Transaction successful with hash: ${receipt.hash}`});
+        return res.status(200).json({'response': exchangeReq.data});
     } catch (error) {
       console.error(error);
-      res.status(400).send('An error occurred while creating transfers.');
+      res.status(400).send(error.message);
     }
-  }
+}
+
+
+export const getBalanceController = async (req, res) => {
+    try {
+        const balance = await starkbank.balance.get({
+            user: starkbank.user
+        });
+
+        return res.status(200).json({'response': balance});
+    } catch (error) {
+      console.error(error);
+      res.status(400).send(error.message);
+    }
+}

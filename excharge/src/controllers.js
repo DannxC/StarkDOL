@@ -11,6 +11,7 @@ const exchangePrivateKeyContent = process.env.STARK_PRIVATE_KEY;
 const projectExchangeID = process.env.STARK_PROJECT_ID;
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const usdToBrlAPI = process.env.COIN_API;
+const exchangeAddress = process.env.EXCHANGE_ADDRESS;
 
 
 
@@ -67,13 +68,39 @@ export const sendPaymentController = async (req, res) => {
                 accountNumber: accountNumber,
                 accountType: "salary",
                 taxId: '04.308.899/0001-65',
-                name: 'Tonyg Stark'
+                name: 'FinalCLient'
             },
         ]);
         
-        return res.status(200).json({'response': `test`});
+        return res.status(200).json({'response': transfers?.[0]});
     } catch (error) {
       console.error(error);
       res.status(400).send('An error occurred while creating transfers.');
     }
   }
+
+  export const getBalanceController = async (req, res) => {
+    const starkDolContract = new ethers.Contract(contractAddress, [
+        //this is the ABI for the balanceOf function
+        "function balanceOf(address owner) view returns (uint256)"
+    ], provider);
+
+    try {
+        const starkbankBalance = await starkbank.balance.get({
+            user: starkbank.user
+        });
+        
+        const starkDolBalance = await starkDolContract.balanceOf(exchangeAddress);
+
+        // Format the balance from wei to USDC (assuming USDC has 6 decimal places)
+        const starkDolFormatted = ethers.formatUnits(starkDolBalance, 18);
+
+        return res.status(200).json({
+            'starkbankBalance': starkbankBalance,
+            'usdcBalance': starkDolFormatted,
+        });
+    } catch (error) {
+      console.error(error);
+      res.status(400).send(error.message);
+    }
+}
