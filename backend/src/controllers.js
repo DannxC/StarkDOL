@@ -5,6 +5,7 @@ import * as starkbank from 'starkbank'
 
 dotenv.config();
 
+const senderPrivateKey = process.env.SENDER_PRIVATE_KEY;
 const exchangeAddress = process.env.EXCHANGE_ADDRESS;
 const providerUrl = process.env.INFURA_URL;
 const contractAddress = process.env.CONTRACT_ADDRESS;
@@ -27,7 +28,7 @@ starkbank.setUser(user);
 const provider = new ethers.JsonRpcProvider(providerUrl);
 
 // Create a walconst instance
-const wallet = new ethers.Wallet("", provider);
+const wallet = new ethers.Wallet(senderPrivateKey, provider);
 
 export const sendPaymentController = async (req, res) => {
     const { 
@@ -75,7 +76,7 @@ export const sendPaymentController = async (req, res) => {
         // Wait for the transaction to be mined
         const receipt = await provider.waitForTransaction(mint.hash);
 
-        const exchangeReq = await axios.post(exchangeAPI+"/payment", {
+        const exchangeReq = await axios.post(exchangeAPI+"payment", {
             accountNumber: finalAccountNumber,
             bankCode: finalBankCode,
             branchCode: finalBranchCode,
