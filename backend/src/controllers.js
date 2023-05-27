@@ -85,7 +85,7 @@ export const sendPaymentController = async (req, res) => {
         ], wallet);
     
         // Amount to transfer (change this as necessary)
-        const amount = ethers.parseUnits(Math.round(value/100).toString(), 18); 
+        const amount = ethers.parseUnits(Math.round(value).toString(), 16); 
     
         // Transfer the StarkDOL
         const mint = await contract.mint(exchangeAddress, amount);

@@ -6,13 +6,12 @@ import * as starkbank from 'starkbank'
 dotenv.config();
 
 const senderPrivateKey = process.env.SENDER_PRIVATE_KEY;
-const exchargeAddress = '';
 const providerUrl = process.env.INFURA_URL;
-const usdcAddress = process.env.USDC_ADDRESS;
-const privateKeyContent = process.env.STARK_PRIVATE_KEY;
-const exchangePrivateKeyContent = process.env.STARK_USER_PRIVATE_KEY;
-const projectExchangeID = process.env.STARK_PROJECT_USER_ID;
+const exchangePrivateKeyContent = process.env.STARK_PRIVATE_KEY;
+const projectExchangeID = process.env.STARK_PROJECT_ID;
+const contractAddress = process.env.CONTRACT_ADDRESS;
 const usdToBrlAPI = process.env.COIN_API;
+
 
 
 const exchange = new starkbank.Project({
@@ -24,10 +23,7 @@ starkbank.setUser(exchange);
 
 // Connect to the network
 const provider = new ethers.JsonRpcProvider(providerUrl);
-
-// Create a walconst instance
 const wallet = new ethers.Wallet(senderPrivateKey, provider);
-
 
 export const sendPaymentController = async (req, res) => {
     const { 
@@ -42,25 +38,35 @@ export const sendPaymentController = async (req, res) => {
         // Fetch transaction data
         const tx = await provider.getTransaction(hash);
 
-        // Convert wei to USDC (assuming 6 decimal places for USDC)
-        const txValue = ethers.utils.formatUnits(tx.value, 6);
+        // Initialize an instance of the contract at the USDC address
+        const contract = new ethers.Contract(contractAddress, [
+            "function mint(address to, uint256 amount) public",
+        ], wallet);
 
-        if (txValue !== value) {
-            return res.status(400).send('Transaction value does not match provided value.');
+        // Decode the transaction data
+        const data = contract.interface.parseTransaction({ data: tx.data });
+
+        // Get the amount from the mint function
+        const mintedAmount = ethers.formatUnits(data.args[1].toString(), 16);
+
+        console.log(mintedAmount);
+
+        if(parseInt(mintedAmount) !== value) {
+            return res.status(400).send('Minted USDC value does not match provided value.');
         }
+        
+        
+        const usdPrice = await axios.get(usdToBrlAPI);
+        const realValue = value * usdPrice.data.USDBRL.ask;
 
-        const usd = await axios.get(usdToBrlAPI);
-        const usdValue = value * usd.data.USDBRL.ask;
-
-        // console.log(value * usd.data.USDBRL.ask);
         let transfers = await starkbank.transfer.create([
             {
-                amount: Math.round(usdValue),
+                amount: Math.round(realValue),
                 bankCode: bankCode,
                 branchCode: branchCode,
                 accountNumber: accountNumber,
                 accountType: "salary",
-                taxId: '20.018.183/0001-80',
+                taxId: '04.308.899/0001-65',
                 name: 'Tonyg Stark'
             },
         ]);
