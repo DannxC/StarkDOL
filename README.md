@@ -3,7 +3,9 @@
 
 ## Overview
 
-Stark Doleidos is an innovative solution that utilizes the Polygon network to conduct international transactions in a more efficient and economical manner. We eliminate the need for an intermediary bank and subsequently reduce transfer fees typically associated with such operations.
+Stark Doleidos is an innovative solution that utilizes the Polygon network to conduct international transactions in a more efficient and economical manner. We eliminate the need for an intermediary bank and subsequently reduce transfer fees typically associated with such operations. 
+Also, you can see our [StarkDOL WhitePaper](https://docs.google.com/document/d/1syS44YSfUzaASGn_znxSkXdBAxlY7r8462p0Pny59L8/edit?usp=sharing)
+
 
 ## Technologies Used
 * Typescript and Next.js for the front-end
