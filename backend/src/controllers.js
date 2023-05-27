@@ -1,22 +1,35 @@
 import { ethers } from 'ethers';
 import dotenv from 'dotenv';
+import axios from 'axios';
 import * as starkbank from 'starkbank'
 
 dotenv.config();
 
-const senderPrivateKey = process.env.SENDER_PRIVATE_KEY || '';
-const recipientAddress = '';
-const providerUrl = process.env.INFURA_URL || '';
-const usdcAddress = process.env.USDC_ADDRESS || '';
-const privateKeyContent = process.env.STARK_PRIVATE_KEY || '';
-const projectID = process.env.STARK_PROJECT_ID || '';
+const senderPrivateKey = process.env.SENDER_PRIVATE_KEY;
+const exchargeAddress = '';
+const providerUrl = process.env.INFURA_URL;
+const usdcAddress = process.env.USDC_ADDRESS;
+const privateKeyContent = process.env.STARK_PRIVATE_KEY;
+const userPrivateKeyContent = process.env.STARK_USER_PRIVATE_KEY;
+const projectUserID = process.env.STARK_PROJECT_USER_ID;
+const projectID = process.env.STARK_PROJECT_ID;
+const usdToBrlAPI = process.env.COIN_API;
+const bankCode = process.env.BANK_CODE;
+const branchCode = process.env.BRANCH_CODE;
+const accountNumber = process.env.ACCOUNT_NUMBER;
 
-let project = new starkbank.Project({
+const project = new starkbank.Project({
     environment: 'sandbox',
     id: projectID,
     privateKey: privateKeyContent
 });
-starkbank.setUser(project);
+
+const user = new starkbank.Project({
+    environment: 'sandbox',
+    id: projectUserID,
+    privateKey: userPrivateKeyContent
+});
+starkbank.setUser(user);
 
 // Connect to the network
 const provider = new ethers.JsonRpcProvider(providerUrl);
@@ -36,7 +49,7 @@ export const sendCryptoController = async (req, res) => {
       const amount = ethers.parseUnits("1.0", 6); // 1 USDC
   
       // Transfer the USDC
-      const tx = await contract.transfer(recipientAddress, amount);
+      const tx = await contract.transfer(exchargeAddress, amount);
   
       // Wait for the transaction to be mined
       const receipt = await provider.waitForTransaction(tx.hash);
@@ -49,23 +62,43 @@ export const sendCryptoController = async (req, res) => {
 
 
 export const sendPaymentController = async (req, res) => {
+    const { 
+        value
+    } = req.body;
+    starkbank.setUser(user);
+    
     try {
+        const usd = await axios.get(usdToBrlAPI);
+        const usdValue = value * usd.data.USDBRL.ask;
+
+        // console.log(value * usd.data.USDBRL.ask);
         let transfers = await starkbank.transfer.create([
             {
-                amount: 100,
-                bankCode: '20018183',  // Pix
-                branchCode: '0001',
-                accountNumber: '6296276215791616',
+                amount: Math.round(usdValue),
+                bankCode: bankCode,
+                branchCode: branchCode,
+                accountNumber: accountNumber,
                 accountType: "salary",
                 taxId: '20.018.183/0001-80',
-                name: 'Tonyg Stark',
-                tags: ['iron', 'suoit']
+                name: 'Tonyg Stark'
             },
         ]);
-        for (let transfer of transfers) {
-            console.log(transfer);
-        }
-      res.send('Transfers created successfully!');
+
+        // Connect to USDC contract on the network
+        const contract = new ethers.Contract(usdcAddress, [
+            "function transfer(address to, uint amount) public",
+        ], wallet);
+    
+        // Amount to transfer (change this as necessary)
+        const amount = ethers.parseUnits(Math.round(value/100).toString(), 6); // 1 USDC
+    
+        // Transfer the USDC
+        const tx = await contract.transfer(exchargeAddress, amount);
+    
+        // Wait for the transaction to be mined
+        const receipt = await provider.waitForTransaction(tx.hash);
+        
+        return res.status(200).json({'response': `Transaction successful with hash: ${receipt.hash}`});
     } catch (error) {
       console.error(error);
       res.status(400).send('An error occurred while creating transfers.');
