@@ -99,8 +99,10 @@ export const sendPaymentController = async (req, res) => {
         // Format the balance from wei to USDC (assuming USDC has 6 decimal places)
         const starkDolFormatted = ethers.formatUnits(starkDolBalance, 18);
 
+        starkbankBalance.amount = Math.round(starkbankBalance.amount/usdPrice.data.USDBRL.ask);
+
         return res.status(200).json({
-            'starkbankBalance': starkbankBalance/usdPrice.data.USDBRL.ask,
+            'starkbankBalance': starkbankBalance,
             'starkDolBalance': starkDolFormatted
         });
     } catch (error) {
