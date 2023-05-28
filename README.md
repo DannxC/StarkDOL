@@ -8,16 +8,13 @@ Also, you can see our [StarkDOL WhitePaper](https://docs.google.com/document/d/1
 
 
 ## Technologies Used
-* Typescript and Next.js for the front-end
-* MetaMask to connect the user with the front-end
-* LayerX for connect the front-end functionalities to the contracts
-* Aurora blockchain for minting NFTs
-* ERC20 and ERC721 protocols for the GenIA token and NFTs
-* Polygon for bridging between Aurora and Chainlink
-* Chainlink for connecting to our own API (back-end)
-* Node.js for the back-end
-* DALL-E2 API for generating AI images
-* Cloudinary for storing the images with a default URL
+* Typescript and VUE for the frontend
+* Polygon blockchain for gas efficiency
+* ERC20 protocols for the StarkDOL Stable Coin
+* Node.js, express.js, ethers.js for the backend
+* HardHat for the contracts
+* StarkBank API
+
 
 ## Features
 * Facilitate cost-effective international transactions with enhanced efficiency
